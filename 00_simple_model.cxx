@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
    // **************
    const size_t maxNumberOfIterations = 100;
    const double convergenceBound = 1e-7;
-   const double damping = 0.9;
+   const double damping = 0.0;
    BeliefPropagation::Parameter parameter(maxNumberOfIterations, convergenceBound, damping);
    BeliefPropagation bp(gm, parameter);
 
