@@ -30,7 +30,6 @@ int main(int argc, char** argv) {
    // type of the function identifier
    typedef Model::FunctionIdentifier FunctionIdentifier;
 
-
    // inference type definitions
    typedef opengm::Maximizer InferOpType;
    typedef opengm::BeliefPropagationUpdateRules<Model, InferOpType> UpdateRules;
@@ -40,16 +39,13 @@ int main(int argc, char** argv) {
    //*******************
    //** Code
    //*******************
-
    std::cout << "Start building the model ... "<<std::endl;
-   // Build empty Model
-   // We can also use SimpleDiscreteSpace
+   // Build empty Model, we can also use SimpleDiscreteSpace
    LabelType numbersOfLabels[] = {2, 2, 2, 2};
    Model gm(Space(numbersOfLabels, numbersOfLabels + 4));
 
    // add 2nd order function and factors to the model
    {
-	   auto lambda = [](auto x, auto y) {return x + y;};
 	   IndexType links[4][2] = {{0,1},
 		   {1,2}, 
 		   {2,3}, 
@@ -103,14 +99,14 @@ int main(int argc, char** argv) {
    // **************
    const size_t maxNumberOfIterations = 100;
    const double convergenceBound = 1e-7;
-   const double damping = 0.1;
+   const double damping = 0.9;
    BeliefPropagation::Parameter parameter(maxNumberOfIterations, convergenceBound, damping);
    BeliefPropagation bp(gm, parameter);
 
    // optimize (approximately)
    BeliefPropagation::VerboseVisitorType visitor;
-   // bp.infer(visitor);
-   bp.infer();
+   bp.infer(visitor);
+   // bp.infer(); // non verbose mode
    // obtain the (approximate) argmax
    std::vector<size_t> labeling(4);
    bp.arg(labeling);
@@ -119,4 +115,5 @@ int main(int argc, char** argv) {
 	   std::cout << v << std::endl;
    }
    
+   return 0;
 }
