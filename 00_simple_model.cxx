@@ -4,6 +4,11 @@
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/operations/adder.hxx>
 
+
+// Inference
+#include <opengm/inference/messagepassing/messagepassing.hxx>
+#include <opengm/operations/maximizer.hxx>
+
 int main(int argc, char** argv) {
    //*******************
    //** Typedefs
@@ -11,7 +16,7 @@ int main(int argc, char** argv) {
    typedef int ValueType;             // type used for values
    typedef size_t IndexType;          // type used for indexing nodes and factors (default : size_t)
    typedef size_t LabelType;          // type used for labels (default : size_t)
-   typedef opengm::Adder OpType;      // operation used to combine terms
+   typedef opengm::Multiplier OpType;      // operation used to combine terms
 
    // shortcut for explicite function
    typedef opengm::ExplicitFunction<ValueType,IndexType,LabelType> ExplicitFunction;
@@ -24,6 +29,12 @@ int main(int argc, char** argv) {
    typedef opengm::GraphicalModel<ValueType,OpType,FunctionTypeList,Space> Model;                 
    // type of the function identifier
    typedef Model::FunctionIdentifier FunctionIdentifier;
+
+
+   // inference type definitions
+   typedef opengm::Maximizer InferOpType;
+   typedef opengm::BeliefPropagationUpdateRules<Model, InferOpType> UpdateRules;
+   typedef opengm::MessagePassing<Model, InferOpType, UpdateRules, opengm::MaxDistance> BeliefPropagation;
 
 
    //*******************
@@ -81,9 +92,31 @@ int main(int argc, char** argv) {
       std::cout << " * Factor " << f << " has order "<< gm[f].numberOfVariables() << "."<<std::endl; 
    }
 
-   LabelType label0[] = {1,1,0,0};
-   LabelType label1[] = {1,0,1,1};
+   LabelType label0[] = {0,1,1,0};
+   LabelType label1[] = {0,0,0,1};
    std::cout << "The Labeling (" <<label0[0]<<","<<label0[1]<<","<<label0[2]<<","<<label0[3]<<")  has the energy "<<gm.evaluate(label0)<<"."<<std::endl;
    std::cout << "The Labeling (" <<label1[0]<<","<<label1[1]<<","<<label1[2]<<","<<label1[3]<<")  has the energy "<<gm.evaluate(label1)<<"."<<std::endl;
+
+
+   // **************
+   // *** Inference
+   // **************
+   const size_t maxNumberOfIterations = 100;
+   const double convergenceBound = 1e-7;
+   const double damping = 0.1;
+   BeliefPropagation::Parameter parameter(maxNumberOfIterations, convergenceBound, damping);
+   BeliefPropagation bp(gm, parameter);
+
+   // optimize (approximately)
+   BeliefPropagation::VerboseVisitorType visitor;
+   // bp.infer(visitor);
+   bp.infer();
+   // obtain the (approximate) argmax
+   std::vector<size_t> labeling(4);
+   bp.arg(labeling);
+
+   for (auto &v : labeling) {
+	   std::cout << v << std::endl;
+   }
    
 }
