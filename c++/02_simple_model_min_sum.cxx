@@ -1,4 +1,5 @@
 #include <iostream>
+#include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
 #include <opengm/opengm.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
 	typedef double ValueType;             // type used for values
 	typedef size_t IndexType;          // type used for indexing nodes and factors (default : size_t)
 	typedef size_t LabelType;          // type used for labels (default : size_t)
-	typedef opengm::Multiplier OpType;      // operation used to combine terms
+	typedef opengm::Adder OpType;      // operation used to combine terms
 
 	// shortcut for explicite function
 	typedef opengm::ExplicitFunction<ValueType,IndexType,LabelType> ExplicitFunction;
@@ -49,10 +50,10 @@ int main(int argc, char** argv) {
 			{2,3}, 
 			{0,3}}; // {3,0} cause OpenGM Error: variable indices of a factor must be sorted
 		ValueType phiValues[4][2][2] = {
-			{{30, 5}, {1,10}},
-			{{100,1}, {1,100}},
-			{{1,100}, {100,1}},
-			{{100,1}, {1,100}}
+			{{3, 15}, {30,8}},
+			{{2,50}, {50,2}},
+			{{50,2}, {2,50}},
+			{{2,50}, {50,2}}
 		};
 
 		LabelType shape[] = {2, 2};
@@ -88,21 +89,24 @@ int main(int argc, char** argv) {
 
 	LabelType label0[] = {0,1,1,0};
 	// LabelType label1[] = {0,0,0,1};
-	LabelType label1[] = {1,1,0,1};
+	//LabelType label1[] = {1,1,0,1};
+	LabelType label1[] = {0,0,1,0};
 	std::cout << "The Labeling (" <<label0[0]<<","<<label0[1]<<","<<label0[2]<<","<<label0[3]<<")  has the energy "<<gm.evaluate(label0)<<"."<<std::endl;
 	std::cout << "The Labeling (" <<label1[0]<<","<<label1[1]<<","<<label1[2]<<","<<label1[3]<<")  has the energy "<<gm.evaluate(label1)<<"."<<std::endl;
 
+	// save model
+	opengm::hdf5::save(gm, "02_gm.h5", "test");
 
 	// **************
 	// *** Inference
 	// **************
-	typedef opengm::Integrator InferOpType;
+	typedef opengm::Minimizer InferOpType;
 	typedef opengm::BeliefPropagationUpdateRules<Model, InferOpType> UpdateRules;
 	typedef opengm::MessagePassing<Model, InferOpType, UpdateRules, opengm::MaxDistance> BeliefPropagation;
 
 	const size_t maxNumberOfIterations = 10000;
 	const double convergenceBound = 1e-90;
-	const double damping = 0.0;
+	const double damping = 0.1;
 	BeliefPropagation::Parameter parameter(maxNumberOfIterations, convergenceBound, damping);
 	parameter.inferSequential_ = true;
 	BeliefPropagation bp(gm, parameter);
